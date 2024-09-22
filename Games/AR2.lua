@@ -1,5 +1,3 @@
-H 
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CollectionService = game:GetService("CollectionService")
 local UserInputService = game:GetService("UserInputService")
