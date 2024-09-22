@@ -80,7 +80,7 @@ LocalPlayer.OnTeleport:Connect(function(State)
 end)
 
 Parvus.Game = GetGameInfo()
-LoadScript("https://raw.githubusercontent.com/Endeared/Parvus/main/Games/AR2")
+loadstring("https://raw.githubusercontent.com/Endeared/Parvus/main/Games/AR2.lua", "AR2")()
 Parvus.Loaded = true
 
 Parvus.Utilities.UI:Push({
