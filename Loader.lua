@@ -45,7 +45,7 @@ local function GetGameInfo()
 end
 
 getgenv().Parvus = {
-    Source = "https://raw.githubusercontent.com/Endeared/Parvus/main"/",
+    Source = "https://raw.githubusercontent.com/Endeared/Parvus/main/",
 
     Games = {
         ["Universal" ] = { Name = "Universal",                  Script = "Universal"  },
