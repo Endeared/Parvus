@@ -1,4 +1,4 @@
-repeat task.wait() until game.IsLoaded
+earepeat task.wait() until game.IsLoaded
 repeat task.wait() until game.GameId ~= 0
 
 if Parvus and Parvus.Loaded then
@@ -45,7 +45,7 @@ local function GetGameInfo()
 end
 
 getgenv().Parvus = {
-    Source = "https://raw.githubusercontent.com/AlexR32/Parvus/" .. Branch .. "/",
+    Source = "https://raw.githubusercontent.com/Endeared/Parvus/main"/",
 
     Games = {
         ["Universal" ] = { Name = "Universal",                  Script = "Universal"  },
