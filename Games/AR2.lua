@@ -52,20 +52,31 @@ local Maids = Framework.Classes.Maids
 local Animators = Framework.Classes.Animators
 local VehicleController = Framework.Classes.VehicleControler
 
+-- dumb krampus error below :scream:
+local Firearm = nil
+task.spawn(function() setthreadidentity(2) Firearm = require(ReplicatedStorage.Client.Abstracts.ItemInitializers.Firearm) end)
+if not Firearm then LocalPlayer:Kick("Send this error to owner: Firearm module does not exist") return end
+local CharacterCamera = Cameras:GetCamera("Character")
+--local ReticleInterface = Interface:Get("Reticle")
+
 local Events = getupvalue(Network.Add, 1)
+--local EventsQueue = getupvalue(Network.Add, 2)
 local GetSpreadAngle = getupvalue(Bullets.Fire, 1)
 local GetSpreadVector = getupvalue(Bullets.Fire, 3)
 local CastLocalBullet = getupvalue(Bullets.Fire, 4)
 local GetFireImpulse = getupvalue(Bullets.Fire, 6)
 local LightingState = getupvalue(Lighting.GetState, 1)
+--local RenderSettings = getupvalue(World.GetDistance, 1)
 local AnimatedReload = getupvalue(Firearm, 7)
 
 local SetWheelSpeeds = getupvalue(VehicleController.Step, 2)
 local SetSteerWheels = getupvalue(VehicleController.Step, 3)
+--local ApplyDragForce = getupvalue(VehicleController.Step, 4)
 
 local Effects = getupvalue(CastLocalBullet, 2)
 local Sounds = getupvalue(CastLocalBullet, 3)
 local ImpactEffects = getupvalue(CastLocalBullet, 6)
+--local TryRicochet = getupvalue(CastLocalBullet, 10)
 
 if type(Events) == "function" then
     Events = getupvalue(Network.Add, 2)
@@ -104,15 +115,108 @@ RemoveObject.Event:Connect(function(...)
     Parvus.Utilities.Drawing:RemoveObject(...)
 end)
 
-local SanityBans = {
+--RenderSettings.Loot = 1
+--RenderSettings.Elements = 1
+--RenderSettings.Detail = -1
+--RenderSettings.Terrain = 36
+
+-- game data mess
+local RandomEvents, ItemCategory, ZombieInherits, SanityBans, AdminRoles = {
+    {"ATVCrashsiteRenegade01", false},
+    {"BankTruckRobbery01", false},
+    {"BeachedAluminumBoat01", false},
+    {"BeechcraftGemBroker01", false},
+    {"C-123ProviderMilitary01", true},
+    {"C-123ProviderMilitary02", true},
+    {"CampSovietBandit01", true},
+    {"ConstructionWorksite01", false},
+    {"CrashEasterBus01", true},
+    {"CrashPrisonBus01", false},
+    {"EasterNestEvent01", true},
+    {"FuddCampsite01", false},
+    {"FuneralProcession01", false},
+    {"GraveFresh01", false},
+    {"GraveNumberOne1", false},
+    {"LifePreserverMilitary01", true},
+    {"LifePreserverSoviet01", true},
+    {"LifePreserverSpecOps01", true},
+    {"LongswordStone01", true},
+    {"MilitaryBlockade01", true},
+    {"MilitaryConvoy01", true},
+    {"ParamedicScene01", false},
+    {"PartyTrailerDisco01", true},
+    {"PartyTrailerTechnoGold", true},
+    {"PartyTrailerTechnoGoldDeagleMod1", true},
+    {"PirateTreasure01", true},
+    {"PoliceBlockade01", false},
+    {"PoolsClosed01", false},
+    {"PopupCampsite01", false},
+    {"PopupFishing01", false},
+    {"PopupFishing02", false},
+    {"RandomCrashCessna01", false},
+    {"SeahawkCrashsite04", true},
+    {"SeahawkCrashsite05", true},
+    {"SeahawkCrashsite06", true},
+    {"SeahawkCrashsite07", true},
+    {"SeahawkCrashsiteRogue01", true},
+    {"SedanHaul01", false},
+    {"SpecialForcesCrash01", true},
+    {"StashFood01", false},
+    {"StashFood02", false},
+    {"StashFood03", false},
+    {"StashGeneral01", false},
+    {"StashGeneral02", false},
+    {"StashGeneral03", false},
+    {"StashMedical01", false},
+    {"StashMedical02", false},
+    {"StashMedical03", false},
+    {"StashWeaponHigh01", false},
+    {"StashWeaponHigh02", false},
+    {"StashWeaponHigh03", false},
+    {"StashWeaponMid01", false},
+    {"StashWeaponMid02", false},
+    {"StashWeaponMid03", false},
+    {"StrandedStation01", false},
+    {"StrandedStationKeyboard01", false},
+    {"ValentinesBachelor01", false}
+},
+{
+    {"Containers", false}, {"Accessories", true}, {"Ammo", false}, {"Attachments", false},
+    {"Backpacks", false}, {"Belts", true}, {"Clothing", true}, {"Consumables", true},
+    {"Firearms", false}, {"Hats", true}, {"Medical", false}, {"Melees", false},
+    {"Miscellaneous", false}, {"Utility", false}, {"VehicleParts", false}, {"Vests", true}
+},
+{
+    {"Presets.Behavior Boss Level 01", true}, {"Presets.Behavior Boss Level 02", true}, {"Presets.Behavior Boss Level 03", true},
+    {"Presets.Behavior Common Level 01", false}, {"Presets.Behavior Common Level 02", false}, {"Presets.Behavior Common Level 03", false},
+    {"Presets.Behavior Common Thrall Level 01", false}, {"Presets.Behavior MiniBoss Level 01", false}, {"Presets.Behavior MiniBoss Level 02", false},
+    {"Presets.Skin Tone Dark", false}, {"Presets.Skin Tone Dark Servant", false}, {"Presets.Skin Tone Light", false}, {"Presets.Skin Tone LightMid", false},
+    {"Presets.Skin Tone LightMidDark", false}, {"Presets.Skin Tone Mid", false}, {"Presets.Skin Tone MidDark", false}, {"Presets.Skin Tone Servant", false}
+},
+{
     "Chat Message Send", "Ping Return", "Bullet Impact Interaction", "Crouch Audio Mute", "Zombie Pushback Force Request", "Camera CFrame Report",
     "Movestate Sync Request", "Update Character Position", "Map Icon History Sync", "Playerlist Staff Icon Get", "Request Physics State Sync",
     "Inventory Sync Request", "Wardrobe Resync Request", "Door Interact ", "Sorry Mate, Wrong Path :/"
+},
+{
+    [110] = "Contractor",
+    [120] = "Moderator",
+    [125] = "Senior Moderator",
+    [130] = "Administrator",
+    [160] = "Chief Administrator",
+    [200] = "Developer",
+    [255] = "Host"
 }
 
 local KnownBodyParts = {
-    {"Head", true},
-    {"UpperTorso", true}
+    {"Head", true}, {"HumanoidRootPart", true},
+    {"UpperTorso", false}, {"LowerTorso", false},
+
+    {"RightUpperArm", false}, {"RightLowerArm", false}, {"RightHand", false},
+    {"LeftUpperArm", false}, {"LeftLowerArm", false}, {"LeftHand", false},
+
+    {"RightUpperLeg", false}, {"RightLowerLeg", false}, {"RightFoot", false},
+    {"LeftUpperLeg", false}, {"LeftLowerLeg", false}, {"LeftFoot", false}
 }
 
 local Window = Parvus.Utilities.UI:Window({
@@ -160,6 +264,73 @@ local Window = Parvus.Utilities.UI:Window({
         VisualsSection:Slider({Name = "Distance", Flag = "ESP/Player/Distance", Min = 25, Max = 10000, Value = 1000, Unit = "studs"})
     end
     local MiscTab = Window:Tab({Name = "Miscellaneous"}) do local LModes = {}
+        local MiscSection = MiscTab:Section({Name = "Other", Side = "Right"}) do
+
+            -- Very basic head expander idc
+            MiscSection:Toggle({Name = "Head Expander", Flag = "AR2/HeadExpander", Value = false,
+            Callback = function(Bool)
+                if Bool then return end
+                for Index, Player in pairs(PlayerService:GetPlayers()) do
+                    if Player == LocalPlayer then continue end
+                    if not Player.Character then continue end
+                    local Character = Player.Character
+                    local Head = Character.Head
+
+                    Head.Size = Mannequin.Head.Size
+                    Head.Transparency = Mannequin.Head.Transparency
+                    Head.CanCollide = Mannequin.Head.CanCollide
+                end
+            end})
+            MiscSection:Slider({Name = "Size Mult", Flag = "AR2/HeadExpander/Value", Min = 1, Max = 20, Value = 10, Unit = "x", Wide = true})
+            MiscSection:Slider({Name = "Transparency", Flag = "AR2/HeadExpander/Transparency", Min = 0, Max = 1, Value = 0.5, Precise = 1, Wide = true})
+            MiscSection:Divider()
+            MiscSection:Toggle({Name = "MeleeAura", Flag = "AR2/MeleeAura", Value = false})
+            MiscSection:Toggle({Name = "Zombie MeleeAura", Flag = "AR2/AntiZombie/MeleeAura", Value = false})
+            MiscSection:Toggle({Name = "Container Persistence", Flag = "AR2/ContainerPersistence", Value = false})
+            MiscSection:Toggle({Name = "Instant Search", Flag = "AR2/InstantSearch", Value = false})
+            --MiscSection:Toggle({Name = "Anti-Zombie", Flag = "AR2/AntiZombie/Enabled", Value = false}):Keybind()
+            --MiscSection:Toggle({Name = "Anti-Zombie MeleeAura", Flag = "AR2/AntiZombie/MeleeAura", Value = false})
+            local SpoofSCS = MiscSection:Toggle({Name = "Spoof State", Flag = "AR2/SSCS", Value = false}) SpoofSCS:Keybind()
+            SpoofSCS:Tooltip("SCS - Set Character State:\nNo Fall Damage\nLess Hunger / Thirst\nWhile Sprinting")
+
+            local MoveStates = {}
+            for MoveState, Value in pairs(Framework.Configs.Character.ValidMoveStates) do
+                MoveStates[#MoveStates + 1] = {Name = MoveState, Mode = "Button", Value = false}
+                if MoveState == "Climbing" then MoveStates[#MoveStates].Value = true end
+            end
+            MiscSection:Dropdown({Name = "Move States", Flag = "AR2/MoveState", List = MoveStates})
+            MiscSection:Toggle({Name = "NoClip", Flag = "AR2/NoClip", Value = false,
+            Callback = function(Bool)
+                if Bool and not NoClipEvent then
+                    NoClipEvent = RunService.Stepped:Connect(function()
+                        if not LocalPlayer.Character then return end
+
+                        for Index, Object in pairs(LocalPlayer.Character:GetDescendants()) do
+                            if Object:IsA("BasePart") then
+                                if NoClipObjects[Object] == nil then
+                                    NoClipObjects[Object] = Object.CanCollide
+                                end Object.CanCollide = false
+                            end
+                        end
+                    end)
+                elseif not Bool and NoClipEvent then
+                    NoClipEvent:Disconnect()
+                    NoClipEvent = nil
+
+                    task.wait(0.1)
+                    for Object, CanCollide in pairs(NoClipObjects) do
+                        Object.CanCollide = CanCollide
+                    end table.clear(NoClipObjects)
+                end
+            end}):Keybind()
+            MiscSection:Toggle({Name = "Map ESP", Flag = "AR2/MapESP", Value = false})
+            MiscSection:Toggle({Name = "Staff Join", Flag = "AR2/StaffJoin", Value = false})
+            MiscSection:Dropdown({HideName = true, Flag = "AR2/StaffJoin/List", List = {
+                {Name = "Server Hop", Mode = "Button", Value = false},
+                {Name = "Notify", Mode = "Button", Value = true},
+                {Name = "Kick", Mode = "Button", Value = false}
+            }})
+        end
     end Parvus.Utilities:SettingsSection(Window, "RightControl", true)
 end Parvus.Utilities.InitAutoLoad(Window)
 
@@ -222,7 +393,10 @@ local function SolveTrajectory(Origin, Velocity, Time, Gravity)
     Gravity = Vector3.new(0, math.abs(Gravity), 0)
     return Origin + (Velocity * Time) + (Gravity * Time * Time)
 end
-
+--[[local function SolveTrajectory2(Origin, Velocity, Time, Gravity)
+    Gravity = Vector3.new(0, math.abs(Gravity), 0)
+    return Origin + (Gravity * Time * Time)
+end]]
 local function GetClosest(Enabled,
     TeamCheck, VisibilityCheck, DistanceCheck,
     DistanceLimit, FieldOfView, Priority, BodyParts,
@@ -231,7 +405,11 @@ local function GetClosest(Enabled,
 
     if not Enabled then return end
     if not PlayerClass.Character then return end
+    --[[local Weapon = PlayerClass.Character.Instance.Equipped:FindFirstChildOfClass("Model")
+    if not Weapon then return end
 
+    local Muzzle = Weapon:FindFirstChild("Muzzle")
+    if not Muzzle then return end]]
 
     local CameraPosition, Closest = Camera.CFrame.Position, nil
     for Index, Player in ipairs(PlayerService:GetPlayers()) do
@@ -374,6 +552,80 @@ local function GetStates()
 
     return RandomData
 end
+--[[local function CastLocalBulletInstant(Origin, SpreadDirection, Direction)
+    local Velocity = Direction * ProjectileSpeed
+    local SpreadVelocity = SpreadDirection * ProjectileSpeed
+
+    local ProjectilePosition = Origin
+    local ProjectileSpreadPosition = Origin
+
+    local ProjectileRay = nil
+    local ProjectileCastInstance = nil
+    local ProjectileCastPosition = Vector3.zero
+
+    local ProjectileSpreadRay = nil
+    local ProjectileSpreadCastInstance = nil
+    local ProjectileSpreadCastPosition = Vector3.zero
+
+    local Exclude = {
+        Effects,
+        Sounds,
+        PlayerClass.Character.Instance
+    }
+
+    local Frame = 1 / 60
+    local TravelTime = 0
+    local Traveling = true
+    local TravelDistance = 0
+    local SpreadTravelDistance = 0
+
+    while Traveling do
+        TravelTime += Frame
+
+        ProjectileRay = Ray.new(ProjectilePosition, Origin + Velocity * TravelTime + ProjectileGravity * Vector3.yAxis * TravelTime ^ 2 - ProjectilePosition)
+        ProjectileSpreadRay = Ray.new(ProjectileSpreadPosition, Origin + SpreadVelocity * TravelTime + ProjectileGravity * Vector3.yAxis * TravelTime ^ 2 - ProjectileSpreadPosition)
+
+        ProjectileCastInstance, ProjectileCastPosition = Raycasting:BulletCast(ProjectileRay, true, Exclude)
+        ProjectileSpreadCastInstance, ProjectileSpreadCastPosition = Raycasting:BulletCast(ProjectileSpreadRay, true, Exclude)
+
+        TravelDistance = TravelDistance + (ProjectilePosition - ProjectileCastPosition).Magnitude
+        SpreadTravelDistance = SpreadTravelDistance + (ProjectileSpreadPosition - ProjectileSpreadCastPosition).Magnitude
+
+        ProjectilePosition = ProjectileCastPosition
+        ProjectileSpreadPosition = ProjectileSpreadCastPosition
+
+        if ProjectileCastInstance or ShotMaxDistance < TravelDistance then
+            Traveling = false
+            break
+        end
+    end
+
+    if ProjectileCastInstance then
+        if (ProjectileSpreadCastPosition - ProjectileCastPosition).Magnitude > 5 then
+            ProjectileSpreadCastPosition = ProjectileSpreadCastPosition - ((ProjectileSpreadRay.Origin - ProjectileSpreadCastPosition).Unit * -(ProjectileCastInstance.Position - ProjectileSpreadCastPosition).Magnitude)
+        end
+
+        return ProjectileSpreadCastPosition, {
+            ProjectileCastInstance.CFrame:PointToObjectSpace(ProjectileSpreadRay.Origin),
+            ProjectileCastInstance.CFrame:VectorToObjectSpace(ProjectileSpreadRay.Direction),
+            ProjectileCastInstance.CFrame:PointToObjectSpace(ProjectileSpreadCastPosition)
+        }
+    end
+end]]
+
+--[[local function BulletCast(ProjectileRay, Include)
+    local Params = RaycastParams.new()
+    Params.FilterDescendantsInstances = Include
+    Params.FilterType = Enum.RaycastFilterType.Include
+
+    local Raycast = workspace:Raycast(ProjectileRay.Origin, ProjectileRay.Direction, Params)
+
+    if Raycast then
+        return Raycast.Instance, Raycast.Position, Raycast.Normal, Raycast.Material
+    end
+
+    return nil, ProjectileRay.Origin + ProjectileRay.Direction, Vector3.yAxis, Enum.Material.Air
+end]]
 
 local function CastLocalBulletInstant(Origin, Direction, SpreadDirection)
     local Velocity = Direction * ProjectileSpeed
@@ -562,17 +814,94 @@ local function HookCharacter(Character)
             ProjectileSpeed = Item.FireConfig.MuzzleVelocity * Globals.MuzzleVelocityMod
         end
 
+        --[[if Window.Flags["AR2/NoSpread"] then
+            if Item.RecoilData then
+                print("SpreadBase", Item.RecoilData.SpreadBase)
+                if Item.AttachmentStatMods then
+                    if Item.AttachmentStatMods.HipSpread then
+                        print("AttachmentStatMods.HipSpread", Item.AttachmentStatMods.HipSpread.Multiplier, Item.AttachmentStatMods.HipSpread.Bonus)
+                    end
+                    if Item.AttachmentStatMods.AimingSpread then
+                        print("AttachmentStatMods.AimingSpread", Item.AttachmentStatMods.AimingSpread.Multiplier, Item.AttachmentStatMods.AimingSpread.Bonus)
+                    end
+                end
+                print("SpreadAddFPSZoom", Item.RecoilData.SpreadAddFPSZoom)
+                print("SpreadAddFPSHip", Item.RecoilData.SpreadAddFPSHip)
+                print("SpreadAddTPSZoom", Item.RecoilData.SpreadAddTPSZoom)
+                print("SpreadAddTPSHip", Item.RecoilData.SpreadAddTPSHip)
+                --Item.RecoilData.SpreadBase = 0.001
+            end
+        end]]
+
         return OldEquip(Self, Item, ...)
     end
     local OldJump = Character.Actions.Jump
     Character.Actions.Jump = function(Self, ...)
         local Args = {...}
 
+        if Window.Flags["AR2/NoJumpDebounce"] then
+            Self.JumpDebounce = 0
+        end
+
+        if Args[1] == "Begin" and Window.Flags["AR2/JumpHeight/Enabled"] then
+            local ReturnArgs = {OldJump(Self, ...)}
+
+            if Self.Humanoid:GetState() == Enum.HumanoidStateType.Freefall
+            and not Window.Flags["AR2/JumpHeight/NoFallCheck"] then return end
+
+            Self.Humanoid.UseJumpPower = false
+            Self.Humanoid.JumpHeight = Window.Flags["AR2/JumpHeight/Height"]
+            Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+
+            return unpack(ReturnArgs)
+        end
+
         return OldJump(Self, ...)
     end
+    --local OldPlayReloadAnimation = Character.Animator.PlayReloadAnimation
+    --print(OldPlayReloadAnimation)
+    --[[for i,v in pairs(Character.Animator) do
+        print(i,v)
+    end]]
+    --[[Character.Animator.PlayReloadAnimation = function(Self, ...)
+        if Window.Flags["AR2/InstantReload"] then
+            local ReturnArgs = {OldPlayReloadAnimation(Self, ...)}
+            local Args = {...}
 
+            for Index = 0, Args[3].LoopCount do
+                Self.ReloadEventCallback("Commit", "Load")
+            end
+            Character.Animator:StopReloadAnimation(false)
+
+            return unpack(ReturnArgs)
+        end
+
+        return OldPlayReloadAnimation(Self, ...)
+    end]]
+    --[[for Index, Spring in pairs({"WobblePos", "WobbleRot", "RotationVelocity", "MoveVelocity"}) do
+        Spring = Character.Animator.Springs[Spring]
+
+        local OldRetune = Spring.Retune
+        Spring.Retune = function(Self, Force, ...)
+            if Window.Flags["AR2/NoWobble"] then Force = 0 end
+            return OldRetune(Self, Force, ...)
+        end
+    end]]
     local OldToolAction = Character.Actions.ToolAction
     Character.Actions.ToolAction = function(Self, ...)
+        if Window.Flags["AR2/UnlockFiremodes"] then
+            if not Self.EquippedItem then return OldToolAction(Self, ...) end
+            local FireModes = Self.EquippedItem.FireModes
+            if not FireModes then return OldToolAction(Self, ...) end
+
+            for Index, Mode in ipairs({"Semiautomatic", "Automatic", "Burst"}) do
+                if not table.find(FireModes, Mode) then
+                    setreadonly(FireModes, false)
+                    table.insert(FireModes, Mode)
+                    setreadonly(FireModes, true)
+                end
+            end
+        end
 
         return OldToolAction(Self, ...)
     end
@@ -580,6 +909,10 @@ end
 
 local OldIndex, OldNamecall = nil, nil
 OldIndex = hookmetamethod(game, "__index", function(Self, Index)
+    if Window.Flags["AR2/HeadExpander"] and tostring(Self) == "Head" and Index == "Size" then
+        return Vector3.one * 1.15
+    end
+
     return OldIndex(Self, Index)
 end)
 
@@ -606,6 +939,48 @@ end)
 
 local OldSend = Network.Send
 Network.Send = function(Self, Name, ...)
+    if table.find(SanityBans, Name) then print("bypassed", Name) return end
+    if Name == "Character Jumped" and Window.Flags["AR2/SSCS"] then return end
+
+    if Name == "Vehicle Bumper Impact" then
+        if Window.Flags["AR2/Vehicle/Impact"] then
+            return
+        end
+    end
+
+    if Name == "Inventory Container Group Disconnect" then
+        if Window.Flags["AR2/ContainerPersistence"] then
+            return
+        end
+    end
+
+    --[[if Name == "Bullet Fired" then
+        if Window.Flags["AR2/NoSpread"] then
+            local Args = {...}
+            print(Args[5] == ProjectileDirection)
+            Args[5] = ProjectileSpread --* Vector3.new(-1, -1, 1)
+            return OldSend(Self, Name, unpack(Args))
+        end
+    end]]
+
+    --[[if Name == "Bullet Impact" then
+        print("bullet impact")
+        if Window.Flags["AR2/NoSpread"] then
+            local Args = {...}
+            local Position, Table = CastLocalBulletInstant(ProjectileOrigin, ProjectileDirection2, ProjectileSpread)
+            if not Position then print(Args[1], "miss") return OldSend(Self, Name, ...) end
+
+            --Args[5] = Target
+            print(Args[1], "hit")
+            Args[6] = Position
+            Args[7][1] = Table[1]
+            Args[7][2] = Table[2]
+            Args[7][3] = Table[3]
+
+            return OldSend(Self, Name, unpack(Args))
+        end
+    end]]
+
     return OldSend(Self, Name, ...)
 end
 
@@ -640,6 +1015,27 @@ Network.Fetch = function(Self, Name, ...)
     return OldFetch(Self, Name, ...)
 end
 
+setupvalue(Bullets.Fire, 1, function(Character, CCamera, Weapon, ...)
+    if Window.Flags["AR2/NoSpread"] then
+        local OldMoveState = Character.MoveState
+        local OldZooming = Character.Zooming
+        local OldFirstPerson = CCamera.FirstPerson
+
+        Character.MoveState = "Walking"
+        Character.Zooming = true
+        CCamera.FirstPerson = true
+
+        local ReturnArgs = {GetSpreadAngle(Character, CCamera, Weapon, ...)}
+
+        Character.MoveState = OldMoveState
+        Character.Zooming = OldZooming
+        CCamera.FirstPerson = OldFirstPerson
+
+        return unpack(ReturnArgs)
+    end
+
+    return GetSpreadAngle(Character, CCamera, Weapon, ...)
+end)
 setupvalue(CastLocalBullet, 6, function(...)
     if Window.Flags["AR2/BulletTracer/Enabled"] then
         local Args = {...}
@@ -649,7 +1045,32 @@ setupvalue(CastLocalBullet, 6, function(...)
 
     return ImpactEffects(...)
 end)
+--[[setupvalue(Bullets.Fire, 3, function(...)
+    if Window.Flags["AR2/NoSpread"] then
+        local Args = {...}
+        
+    end
 
+    return GetSpreadVector(...)
+end)]]
+--[[setupvalue(Bullets.Fire, 4, function(...)
+    local Args = {...}
+
+    --ProjectileOrigin = Args[6]
+    --ProjectileSpread = Args[7]
+
+    if math.max(Args[5].FireConfig.PelletCount, 1) == 1 then
+        ProjectileSpread = Args[7]
+        print("projectile spread")
+    end
+
+    if Window.Flags["AR2/NoSpread"] then
+        Args[7] = Args[7] + (ProjectileDirection - Args[7])
+        return CastLocalBullet(unpack(Args))
+    end
+
+    return CastLocalBullet(...)
+end)]]
 setupvalue(Bullets.Fire, 6, function(...)
     if Window.Flags["AR2/Recoil/Enabled"] then
         local ReturnArgs = {GetFireImpulse(...)}
@@ -662,6 +1083,107 @@ setupvalue(Bullets.Fire, 6, function(...)
     end
 
     return GetFireImpulse(...)
+end)
+setupvalue(VehicleController.Step, 2, function(Self, Throttle, ...)
+    if Window.Flags["AR2/Vehicle/Enabled"] then
+        --[[if Window.Flags["AR2/Vehicle/Fly"] then
+            local MoveDirection = Parvus.Utilities.MovementToDirection()
+
+            Self.BasePart.AssemblyLinearVelocity = Vector3.zero
+            Self.BasePart.CFrame += MoveDirection * Window.Flags["AR2/Fly/Speed"]
+
+            return
+        end]]
+        if not PlayerClass.Character then return end
+        Throttle = Window.Flags["AR2/Vehicle/Instant"]
+        and PlayerClass.Character.MoveVector.Z or -Throttle
+
+        for Index, Wheel in pairs(Self.Wheels:GetChildren()) do
+            local DriveMotor = Wheel:FindFirstChild("Drive Motor")
+            local PrimaryPart = Wheel.PrimaryPart
+
+            if not DriveMotor or not PrimaryPart then continue end
+            PrimaryPart.CustomPhysicalProperties = PhysicalProperties.new(10, 2, 0)
+            DriveMotor.AngularVelocity = Throttle * (Window.Flags["AR2/Vehicle/MaxSpeed"] / (PrimaryPart.Size.Y / 2))
+        end
+
+        return
+    end
+
+    return SetWheelSpeeds(Self, Throttle, ...)
+end)
+setupvalue(VehicleController.Step, 3, function(Self, Steer, Throttle, ...)
+    if Window.Flags["AR2/Vehicle/Enabled"] then
+        if not PlayerClass.Character then return end
+        Steer = Window.Flags["AR2/Vehicle/Instant"]
+        and -PlayerClass.Character.MoveVector.X or -Steer
+
+        for Index, Wheel in pairs(Self.Wheels:GetChildren()) do
+            local WheelPhysics = Self.Config.Physics.Wheels[Wheel.Name]
+            if not WheelPhysics or not WheelPhysics.DoesSteer then continue end
+
+            local DriveMotor = Wheel:FindFirstChild("Drive Motor")
+            if not DriveMotor then continue end
+
+            local Attachment = Wheel.PrimaryPart:FindFirstChild("Attachment")
+            local Angle = math.rad(WheelPhysics.SteerAngle * Steer)
+
+            if Attachment then
+                Angle += math.rad(Attachment.Orientation.Y)
+            end
+
+            DriveMotor.Attachment0.CFrame = CFrame.Angles(0, Angle, 0)
+        end
+
+        return
+    end
+
+    return SetSteerWheels(Self, Steer, Throttle, ...)
+end)
+--[[setupvalue(VehicleController.Step, 4, function(Self, Throttle, ...)
+    if Window.Flags["AR2/Vehicle/Enabled"] then
+        if not PlayerClass.Character then return end
+        --Throttle = Window.Flags["AR2/Vehicle/Instant"]
+        --and PlayerClass.Character.MoveVector.Z or -Throttle
+
+        local Mass = 0
+        for Index, Descendant in pairs(Self.Instance:GetDescendants()) do
+            if not Descendant:IsA("BasePart") then continue end
+            Mass += Descendant:GetMass()
+        end
+
+        --local Velocity = Self.BasePart.AssemblyLinearVelocity
+        --Throttle = math.abs(Throttle) * Window.Flags["AR2/Vehicle/MaxSpeed"]
+        Self.BasePart.AssemblyLinearVelocity += Vector3.new(0, -1, 0) * Mass / 200
+
+        return
+    end
+
+    return ApplyDragForce(Self, Throttle, ...)
+end)]]
+setupvalue(Firearm, 7, function(...)
+    if Window.Flags["AR2/InstantReload"] then
+        local Args = {...}
+
+        for Index = 0, Args[3].LoopCount do
+            Args[4]("Commit", "Load")
+        end
+
+        Args[4]("Commit", "End")
+        return true
+    end
+
+    return AnimatedReload(...)
+end)
+setupvalue(InteractHeartbeat, 11, function(...)
+    if Window.Flags["AR2/InstantSearch"] then
+        local ReturnArgs = {FindItemData(...)}
+        if ReturnArgs[4] then ReturnArgs[4] = 0 end
+
+        return unpack(ReturnArgs)
+    end
+
+    return FindItemData(...)
 end)
 
 local OldFire = Bullets.Fire
@@ -703,7 +1225,17 @@ Bullets.Fire = function(Self, ...)
     return OldFire(Self, ...)
 end
 
-
+-- Old Recoil Control
+--[[local OldPost = Animators.Post
+Animators.Post = function(Self, Name, ...) local Args = {...}
+    if Window.Flags["AR2/Recoil/Enabled"] and Name == "FireImpulse" then
+        Args[1][1] = Args[1][1] * (Window.Flags["AR2/Recoil/ShiftForce"] / 100)
+        Args[1][2] = Args[1][2] * (Window.Flags["AR2/Recoil/RollBias"] / 100)
+        Args[1][3] = Args[1][3] * (Window.Flags["AR2/Recoil/RaiseForce"] / 100)
+        Args[1][4] = Args[1][4] * (Window.Flags["AR2/Recoil/SlideForce"] / 100)
+        Args[1][5] = Args[1][5] * (Window.Flags["AR2/Recoil/KickUpForce"] / 100)
+    end return OldPost(Self, Name, unpack(Args))
+end]]
 local OldFlinch = CharacterCamera.Flinch
 CharacterCamera.Flinch = function(Self, ...)
     if Window.Flags["AR2/NoFlinch"] then return end
@@ -719,13 +1251,40 @@ Raycasting.CharacterGroundCast = function(Self, Position, LengthDown, ...)
     end
     return OldCharacterGroundCast(Self, Position, LengthDown, ...)
 end
-
+--[[local OldSwimCheckCast = Raycasting.SwimCheckCast
+Raycasting.SwimCheckCast = function(Self, ...)
+    if Window.Flags["AR2/UseInWater"] then return nil end
+    return OldSwimCheckCast(Self, ...)
+end]]
 local OldPlayAnimation = Animators.PlayAnimation
 Animators.PlayAnimation = function(Self, Path, ...)
     if Path == "Actions.Fall Impact" and Window.Flags["AR2/NoFallImpact"] then return end
     return OldPlayAnimation(Self, Path, ...)
 end
+-- Old Vehicle Mod
+--[[local OldVC = VehicleController.new
+VehicleController.new = function(...)
+    local ReturnArgs = {OldVC(...)}
 
+    local OldStep = ReturnArgs[1].Step
+    ReturnArgs[1].Step = function(Self, ...)
+        if Window.Flags["AR2/Vehicle/Enabled"] then
+            local MoveVector = PlayerClass.Character.MoveVector
+            Self.ThrottleSolver.Position = -MoveVector.Z
+            * Window.Flags["AR2/Vehicle/Speed"] / 100
+            Self.SteerSolver.Position = MoveVector.X
+            * Window.Flags["AR2/Vehicle/Steer"] / 100
+
+            --Self.ThrottleSolver.Speed = Window.Flags["AR2/Vehicle/Speed"]
+            --Self.ThrottleSolver.Damping = Window.Flags["AR2/Vehicle/Damping"]
+            --Self.ThrottleSolver.Velocity = Window.Flags["AR2/Vehicle/Velocity"]
+        end
+
+        return OldStep(Self, ...)
+    end
+
+    return unpack(ReturnArgs)
+end]]
 
 local OldCD = Events["Character Dead"]
 if OldCD then
@@ -756,6 +1315,36 @@ Events["Squad Update"] = function(Data, ...)
     --print("Squad Updated")
     return OldSquadUpdate(Data, ...)
 end
+local OldICA = Events["Inventory Container Added"]
+Events["Inventory Container Added"] = function(Id, Data, ...)
+    if not Window.Flags["AR2/ESP/Items/Containers/Enabled"] then return OldICA(Id, Data, ...) end
+
+    --print(Data.Type)
+
+    if Data.Type ~= "Corpse" or Data.Type ~= "Vehicle" then
+        if Data.WorldPosition and Length(Data.Occupants) > 0 then
+            AddObject:Fire(Data.Id, CIIC(Data), Data.WorldPosition,
+            "AR2/ESP/Items", "AR2/ESP/Items/Containers", Window.Flags)
+        end
+    end
+
+    return OldICA(Id, Data, ...)
+end
+local OldCC = Events["Container Changed"]
+Events["Container Changed"] = function(Data, ...)
+    if not Window.Flags["AR2/ESP/Items/Containers/Enabled"] then return OldCC(Data, ...) end
+
+    RemoveObject:Fire(Data.Id)
+
+    if Data.Type ~= "Corpse" or Data.Type ~= "Vehicle" then
+        if Data.WorldPosition and Length(Data.Occupants) > 0 then
+            AddObject:Fire(Data.Id, CIIC(Data), Data.WorldPosition,
+            "AR2/ESP/Items", "AR2/ESP/Items/Containers", Window.Flags)
+        end
+    end
+
+    return OldCC(Data, ...)
+end
 
 if PlayerClass.Character then
     HookCharacter(PlayerClass.Character)
@@ -764,6 +1353,29 @@ PlayerClass.CharacterAdded:Connect(function(Character)
     HookCharacter(Character)
 end)
 
+Interface:GetVisibilityChangedSignal("Map"):Connect(function(Visible)
+    if Visible and Window.Flags["AR2/MapESP"] then
+        Interface:Get("Map"):EnableGodview()
+    else
+        Interface:Get("Map"):DisableGodview()
+    end
+end)
+
+Parvus.Utilities.NewThreadLoop(0, function()
+    if not (Aimbot or Window.Flags["Aimbot/AlwaysEnabled"]) then return end
+
+    AimAt(GetClosest(
+        Window.Flags["Aimbot/Enabled"],
+        Window.Flags["Aimbot/TeamCheck"],
+        Window.Flags["Aimbot/VisibilityCheck"],
+        Window.Flags["Aimbot/DistanceCheck"],
+        Window.Flags["Aimbot/DistanceLimit"],
+        Window.Flags["Aimbot/FOV/Radius"],
+        Window.Flags["Aimbot/Priority"][1],
+        Window.Flags["Aimbot/BodyParts"],
+        Window.Flags["Aimbot/Prediction"]
+    ), Window.Flags["Aimbot/Sensitivity"] / 100)
+end)
 Parvus.Utilities.NewThreadLoop(0, function()
     SilentAim = GetClosest(
         Window.Flags["SilentAim/Enabled"],
@@ -776,7 +1388,259 @@ Parvus.Utilities.NewThreadLoop(0, function()
         Window.Flags["SilentAim/BodyParts"]
     )
 end)
+Parvus.Utilities.NewThreadLoop(0, function()
+    if not (Trigger or Window.Flags["Trigger/AlwaysEnabled"]) then return end
+    if not isrbxactive() then return end
+
+    local TriggerClosest = GetClosest(
+        Window.Flags["Trigger/Enabled"],
+        Window.Flags["Trigger/TeamCheck"],
+        Window.Flags["Trigger/VisibilityCheck"],
+        Window.Flags["Trigger/DistanceCheck"],
+        Window.Flags["Trigger/DistanceLimit"],
+        Window.Flags["Trigger/FOV/Radius"],
+        Window.Flags["Trigger/Priority"][1],
+        Window.Flags["Trigger/BodyParts"],
+        Window.Flags["Trigger/Prediction"]
+    ) if not TriggerClosest then return end
+
+    task.wait(Window.Flags["Trigger/Delay"]) mouse1press()
+    if Window.Flags["Trigger/HoldMouseButton"] then
+        while task.wait() do
+            TriggerClosest = GetClosest(
+                Window.Flags["Trigger/Enabled"],
+                Window.Flags["Trigger/TeamCheck"],
+                Window.Flags["Trigger/VisibilityCheck"],
+                Window.Flags["Trigger/DistanceCheck"],
+                Window.Flags["Trigger/DistanceLimit"],
+                Window.Flags["Trigger/FOV/Radius"],
+                Window.Flags["Trigger/Priority"][1],
+                Window.Flags["Trigger/BodyParts"],
+                Window.Flags["Trigger/Prediction"]
+            ) if not TriggerClosest or not Trigger then break end
+        end
+    end mouse1release()
+end)
+
+Parvus.Utilities.NewThreadLoop(0, function(Delta)
+    if not Window.Flags["AR2/WalkSpeed/Enabled"] then return end
+
+    if not PlayerClass.Character then return end
+    local RootPart = PlayerClass.Character.RootPart
+    local MoveDirection = Parvus.Utilities.MovementToDirection() * XZVector
+
+    RootPart.CFrame += MoveDirection * Delta * Window.Flags["AR2/WalkSpeed/Speed"] * 100
+end)
+Parvus.Utilities.NewThreadLoop(0, function(Delta)
+    if not Window.Flags["AR2/Fly/Enabled"] then return end
+
+    if not PlayerClass.Character then return end
+    local RootPart = PlayerClass.Character.RootPart
+    local MoveDirection = Parvus.Utilities.MovementToDirection()
+
+    RootPart.AssemblyLinearVelocity = Vector3.zero
+    RootPart.CFrame += MoveDirection * (Window.Flags["AR2/Fly/Speed"] * (Delta * 60))
+end)
+Parvus.Utilities.NewThreadLoop(0.1, function()
+    if not Window.Flags["AR2/MeleeAura"]
+    and not Window.Flags["AR2/AntiZombie/MeleeAura"] then return end
+
+    local Enemies = GetEnemyForMelee(
+        Window.Flags["AR2/MeleeAura"],
+        Window.Flags["AR2/AntiZombie/MeleeAura"]
+    )
+
+    if not Enemies then return end
+    if #Enemies == 0 then return end
+    SwingMelee(Enemies)
+end)
+Parvus.Utilities.NewThreadLoop(1, function()
+    if not Window.Flags["AR2/HeadExpander"] then return end
+    for Index, Player in pairs(PlayerService:GetPlayers()) do
+        if Player == LocalPlayer then continue end
+        if not Player.Character then continue end
+        local Character = Player.Character
+        local Head = Character.Head
+
+        Head.Size = Mannequin.Head.Size * Window.Flags["AR2/HeadExpander/Value"]
+        Head.Transparency = Window.Flags["AR2/HeadExpander/Transparency"]
+        Head.CanCollide = true
+    end
+end)
+Parvus.Utilities.NewThreadLoop(0.5, function()
+    if not Window.Flags["AR2/Lighting/Enabled"] then return end
+    local Time = LightingState.StartTime + Workspace:GetServerTimeNow()
+    LightingState.BaseTime = Time + ((Window.Flags["AR2/Lighting/Time"] * (86400 / LightingState.CycleLength)) % 1440)
+    --print(LightingState.StartTime, LightingState.CycleLength, LightingState.BaseTime)
+end)
+Parvus.Utilities.NewThreadLoop(1, function()
+    if not Window.Flags["AR2/ESP/Items/Enabled"]
+    and not Window.Flags["AR2/ESP/Items/Containers/Enabled"] then return end
+
+    local Items = GetItemsInRadius(100)
+
+    if not PlayerClass.Character
+    or Interface:IsVisible("GameMenu")
+    or #Items == 0 then return end
+
+    for Index, Item in pairs(Items) do
+        if Interface:IsVisible("GameMenu")
+        or table.find(ItemMemory, Item) then continue end
+
+        task.spawn(function()
+            if Network:Fetch("Inventory Container Group Connect", Item) then
+                Network:Send("Inventory Container Group Disconnect")
+                table.insert(ItemMemory, Item)
+                local Pos = #ItemMemory
+                task.wait(30)
+                table.remove(ItemMemory, Pos)
+            end
+        end)
+    end
+end)
+
+for Index, Item in pairs(Loot:GetDescendants()) do
+    if Item:IsA("CFrameValue") then
+        local ItemData = ReplicatedStorage.ItemData:FindFirstChild(Item.Name, true)
+        if not ItemData then continue end --print(ItemData.Parent.Name)
+
+        Parvus.Utilities.Drawing:AddObject(Item, Item.Name, Item.Value.Position,
+            "AR2/ESP/Items", "AR2/ESP/Items/" .. ItemData.Parent.Name, Window.Flags
+        )
+    end
+end
+for Index, Event in pairs(Randoms:GetChildren()) do
+    for Index, Data in pairs(RandomEvents) do
+        if Event.Name ~= Data[1] then continue end --print(Event.Name)
+        Parvus.Utilities.Drawing:AddObject(Event, Event.Name, Event.Value.Position,
+            "AR2/ESP/RandomEvents", "AR2/ESP/RandomEvents/" .. Event.Name, Window.Flags
+        )
+    end
+end
+for Index, Corpse in pairs(Corpses:GetChildren()) do
+    if Corpse.Name == "Zombie" then continue end
+    if not Corpse.PrimaryPart then continue end
+
+    Parvus.Utilities.Drawing:AddObject(
+        Corpse, Corpse.Name, Corpse.PrimaryPart,
+        "AR2/ESP/Corpses", "AR2/ESP/Corpses", Window.Flags
+    )
+end
+for Index, Zombie in pairs(Zombies.Mobs:GetChildren()) do
+    if not Zombie.PrimaryPart then continue end
+    local Config = require(Zombies.Configs[Zombie.Name])
+
+    if not Config.Inherits then continue end
+    for Index, Inherit in pairs(Config.Inherits) do
+        for Index, Data in pairs(ZombieInherits) do
+            if Inherit ~= Data[1] then continue end --print(Inherit.Name)
+            local InheritName = Inherit:gsub("Presets.", ""):gsub(" ", "")
+
+            Parvus.Utilities.Drawing:AddObject(
+                Zombie, Zombie.Name, Zombie.PrimaryPart, "AR2/ESP/Zombies",
+                "AR2/ESP/Zombies/"..InheritName, Window.Flags
+            )
+        end
+    end
+end
+for Index, Vehicle in pairs(Vehicles:GetChildren()) do
+    if not Vehicle.PrimaryPart then continue end
+
+    Parvus.Utilities.Drawing:AddObject(
+        Vehicle, Vehicle.Name, Vehicle.PrimaryPart,
+        "AR2/ESP/Vehicles", "AR2/ESP/Vehicles", Window.Flags
+    )
+end
+
+Loot.DescendantAdded:Connect(function(Item)
+    if Item:IsA("CFrameValue") then
+        local ItemData = ReplicatedStorage.ItemData:FindFirstChild(Item.Name, true)
+        if not ItemData then return end --print(ItemData.Parent.Name)
+
+        Parvus.Utilities.Drawing:AddObject(Item, Item.Name, Item.Value.Position,
+            "AR2/ESP/Items", "AR2/ESP/Items/" .. ItemData.Parent.Name, Window.Flags
+        )
+    end
+end)
+Randoms.ChildAdded:Connect(function(Event)
+    for Index, Data in pairs(RandomEvents) do
+        if Event.Name ~= Data[1] then continue end --print(Event.Name)
+        Parvus.Utilities.Drawing:AddObject(Event, Event.Name, Event.Value.Position,
+            "AR2/ESP/RandomEvents", "AR2/ESP/RandomEvents/" .. Event.Name, Window.Flags
+        )
+
+        if Window.Flags["AR2/ESP/RandomEvents/Enabled"]
+        and Window.Flags["AR2/ESP/RandomEvents/" .. Event.Name] then
+            local Distance = (Event.Value.Position - Camera.CFrame.Position).Magnitude
+            local Title = string.format("%s spawned (~%i studs away)", Event.Name, Distance)
+            Parvus.Utilities.UI:Toast({Title = Title, Duration = 20})
+        end
+    end
+end)
+Corpses.ChildAdded:Connect(function(Corpse)
+    if Corpse.Name == "Zombie" then return end
+    repeat task.wait() until Corpse.PrimaryPart
+    Parvus.Utilities.Drawing:AddObject(
+        Corpse, Corpse.Name, Corpse.PrimaryPart,
+        "AR2/ESP/Corpses", "AR2/ESP/Corpses", Window.Flags
+    )
+end)
+Zombies.Mobs.ChildAdded:Connect(function(Zombie)
+    repeat task.wait() until Zombie.PrimaryPart
+    local Config = require(Zombies.Configs[Zombie.Name])
+
+    if not Config.Inherits then return end
+    for Index, Inherit in pairs(Config.Inherits) do
+        for Index, Data in pairs(ZombieInherits) do
+            if Inherit ~= Data[1] then continue end --print(Inherit.Name)
+            local InheritName = Inherit:gsub("Presets.", ""):gsub(" ", "")
+
+            Parvus.Utilities.Drawing:AddObject(
+                Zombie, Zombie.Name, Zombie.PrimaryPart, "AR2/ESP/Zombies",
+                "AR2/ESP/Zombies/"..InheritName, Window.Flags
+            )
+        end
+    end
+end)
+Vehicles.ChildAdded:Connect(function(Vehicle)
+    repeat task.wait() until Vehicle.PrimaryPart
+    --print(Vehicle.Name)
+
+    Parvus.Utilities.Drawing:AddObject(
+        Vehicle, Vehicle.Name, Vehicle.PrimaryPart,
+        "AR2/ESP/Vehicles", "AR2/ESP/Vehicles", Window.Flags
+    )
+end)
+
+Loot.DescendantRemoving:Connect(function(Item)
+    Parvus.Utilities.Drawing:RemoveObject(Item)
+end)
+Randoms.ChildRemoved:Connect(function(Event)
+    Parvus.Utilities.Drawing:RemoveObject(Event)
+end)
+Corpses.ChildRemoved:Connect(function(Corpse)
+    Parvus.Utilities.Drawing:RemoveObject(Corpse)
+end)
+Zombies.Mobs.ChildRemoved:Connect(function(Zombie)
+    Parvus.Utilities.Drawing:RemoveObject(Zombie)
+end)
+Vehicles.ChildRemoved:Connect(function(Vehicle)
+    Parvus.Utilities.Drawing:RemoveObject(Vehicle)
+end)
 
 Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
     Camera = Workspace.CurrentCamera
+end)
+
+for Index, Player in pairs(PlayerService:GetPlayers()) do
+    if Player == LocalPlayer then continue end
+    Parvus.Utilities.Drawing:AddESP(Player, "Player", "ESP/Player", Window.Flags)
+    task.spawn(function() CheckForAdmin(Player) end)
+end
+PlayerService.PlayerAdded:Connect(function(Player)
+    Parvus.Utilities.Drawing:AddESP(Player, "Player", "ESP/Player", Window.Flags)
+    task.spawn(function() CheckForAdmin(Player) end)
+end)
+PlayerService.PlayerRemoving:Connect(function(Player)
+    Parvus.Utilities.Drawing:RemoveESP(Player)
 end)
