@@ -1063,6 +1063,8 @@ local function CIIC(Data) -- ConcatItemsInContainer
     return table.concat(Items, "\n")
 end
 
+local HookContext = {}
+
 local function HookCharacter(Character)
     for Index, Item in pairs(PlayerClass.Character.Maid.Items) do
         if type(Item) == "table" and rawget(Item, "Action") then
@@ -1072,59 +1074,30 @@ local function HookCharacter(Character)
         end
     end
 
-    local OldEquip; OldEquip = hookfunction(Character.Equip, function(Self, Item, ...)
+    HookContext.OldEquip = hookfunction(Character.Equip, function(Self, Item, ...)
+        -- Update projectile speed based on item configuration
         if Item.FireConfig and Item.FireConfig.MuzzleVelocity then
             ProjectileSpeed = Item.FireConfig.MuzzleVelocity * Globals.MuzzleVelocityMod
         end
-
-        --[[if Window.Flags["AR2/NoSpread"] then
-            if Item.RecoilData then
-                print("SpreadBase", Item.RecoilData.SpreadBase)
-                if Item.AttachmentStatMods then
-                    if Item.AttachmentStatMods.HipSpread then
-                        print("AttachmentStatMods.HipSpread", Item.AttachmentStatMods.HipSpread.Multiplier, Item.AttachmentStatMods.HipSpread.Bonus)
-                    end
-                    if Item.AttachmentStatMods.AimingSpread then
-                        print("AttachmentStatMods.AimingSpread", Item.AttachmentStatMods.AimingSpread.Multiplier, Item.AttachmentStatMods.AimingSpread.Bonus)
-                    end
-                end
-                print("SpreadAddFPSZoom", Item.RecoilData.SpreadAddFPSZoom)
-                print("SpreadAddFPSHip", Item.RecoilData.SpreadAddFPSHip)
-                print("SpreadAddTPSZoom", Item.RecoilData.SpreadAddTPSZoom)
-                print("SpreadAddTPSHip", Item.RecoilData.SpreadAddTPSHip)
-                --Item.RecoilData.SpreadBase = 0.001
-            end
-        end]]
-
-        return OldEquip(Self, Item, ...)
+        
+        -- Call the original OldEquip function from the HookContext
+        return HookContext.OldEquip(Self, Item, ...)
     end)
     
 end
 
-local OldNamecall = nil
-OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
+HookContext.OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
     local Method = getnamecallmethod()
-
-    --[[
-    if Method == "FireServer" then
-        local Args = {...}
-        if type(Args[1]) == "table" then
-            print("framework check")
-            return
-        end
-    end
-    ]]
-
-    if Method == "GetChildren"
-    and (Self == ReplicatedFirst
-    or Self == ReplicatedStorage) then
-        print("crash bypass")
-        wait(383961600) -- 4444 days
+    
+    -- Crash bypass logic
+    if Method == "GetChildren" and (Self == ReplicatedFirst or Self == ReplicatedStorage) then
+        print("crash bypass active")
+        wait(383961600) -- Delay execution to prevent crash
     end
 
-    return OldNamecall(Self, ...)
+    -- Call the original OldNamecall function from the HookContext
+    return HookContext.OldNamecall(Self, ...)
 end)
-
 
 setupvalue(Bullets.Fire, 1, function(Character, CCamera, Weapon, ...)
     if Window.Flags["AR2/NoSpread"] then
@@ -1181,9 +1154,10 @@ setupvalue(InteractHeartbeat, 11, function(...)
     return FindItemData(...)
 end)
 
-local OldFire; OldFire = hookfunction(Bullets.Fire, function(Self, ...)
+HookContext.OldFire = hookfunction(Bullets.Fire, function(Self, ...)
+    local Args = {...}
+
     if SilentAim and math.random(100) <= Window.Flags["SilentAim/HitChance"] then
-        local Args = {...}
         local BodyPart = SilentAim[3]
         local BodyPartPosition = BodyPart.Position
         local Direction = BodyPartPosition - Args[4]
@@ -1193,30 +1167,18 @@ local OldFire; OldFire = hookfunction(Bullets.Fire, function(Self, ...)
             Args[4] = Args[4] + (Direction.Unit * Distance)
         end
 
+        -- Calculate body part position with or without instant hit
         BodyPartPosition = Window.Flags["AR2/InstantHit"] and BodyPartPosition
-        or SolveTrajectory(BodyPartPosition, BodyPart.AssemblyLinearVelocity,
-        Direction.Magnitude / ProjectileSpeed, ProjectileGravity)
+        or SolveTrajectory(BodyPartPosition, BodyPart.AssemblyLinearVelocity, Direction.Magnitude / ProjectileSpeed, ProjectileGravity)
 
-        --[[local BodyPartPosition2 = Window.Flags["AR2/InstantHit"] and BodyPartPosition
-        or SolveTrajectory2(BodyPartPosition, BodyPart.AssemblyLinearVelocity,
-        Direction.Magnitude / ProjectileSpeed, ProjectileGravity)]]
+        Args[5] = (BodyPartPosition - Args[4]).Unit
 
-        --local BodyPartPosition = Window.Flags["AR2/InstantHit"] and SilentAim[3].Position
-        --or Parvus.Utilities.Physics.SolveTrajectory(Args[4], SilentAim[3].Position,
-        --SilentAim[3].AssemblyLinearVelocity, ProjectileSpeed, ProjectileGravity, 1)
-
-        ProjectileDirection = (BodyPartPosition - Args[4]).Unit
-        --ProjectileDirection2 = (BodyPartPosition2 - Args[4]).Unit
-        Args[5] = ProjectileDirection --(BodyPartPosition - Args[4]).Unit
-
-        return OldFire(Self, unpack(Args))
+        -- Call the original OldFire function from the HookContext
+        return HookContext.OldFire(Self, unpack(Args))
     end
 
-    local Args = {...}
-    ProjectileDirection = Args[5]
-    --ProjectileDirection2 = Args[5]
-
-    return OldFire(Self, ...)
+    -- If not using Silent Aim, pass the original arguments to the original OldFire function
+    return HookContext.OldFire(Self, ...)
 end)
 
 local OldCD; OldCD = hookfunction(Events["Character Dead"], function(...)
