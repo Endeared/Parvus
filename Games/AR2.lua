@@ -225,6 +225,37 @@ local Window = Parvus.Utilities.UI:Window({
 }) do
 
     local CombatTab = Window:Tab({Name = "Combat"}) do
+        local AimbotSection = CombatTab:Section({Name = "Aimbot", Side = "Left"}) do
+            AimbotSection:Toggle({Name = "Enabled", Flag = "Aimbot/Enabled", Value = false})
+            :Keybind({Flag = "Aimbot/Keybind", Value = "MouseButton2", Mouse = true, DisableToggle = true,
+            Callback = function(Key, KeyDown) Aimbot = Window.Flags["Aimbot/Enabled"] and KeyDown end})
+
+            AimbotSection:Toggle({Name = "Always Enabled", Flag = "Aimbot/AlwaysEnabled", Value = false})
+            AimbotSection:Toggle({Name = "Prediction", Flag = "Aimbot/Prediction", Value = true})
+
+            AimbotSection:Toggle({Name = "Team Check", Flag = "Aimbot/TeamCheck", Value = false})
+            AimbotSection:Toggle({Name = "Distance Check", Flag = "Aimbot/DistanceCheck", Value = false})
+            AimbotSection:Toggle({Name = "Visibility Check", Flag = "Aimbot/VisibilityCheck", Value = false})
+            AimbotSection:Slider({Name = "Sensitivity", Flag = "Aimbot/Sensitivity", Min = 0, Max = 100, Value = 20, Unit = "%"})
+            AimbotSection:Slider({Name = "Field Of View", Flag = "Aimbot/FOV/Radius", Min = 0, Max = 500, Value = 100, Unit = "r"})
+            AimbotSection:Slider({Name = "Distance Limit", Flag = "Aimbot/DistanceLimit", Min = 25, Max = 10000, Value = 250, Unit = "studs"})
+
+            local PriorityList, BodyPartsList = {{Name = "Closest", Mode = "Button", Value = true}}, {}
+            for Index, Value in pairs(KnownBodyParts) do
+                PriorityList[#PriorityList + 1] = {Name = Value[1], Mode = "Button", Value = false}
+                BodyPartsList[#BodyPartsList + 1] = {Name = Value[1], Mode = "Toggle", Value = Value[2]}
+            end
+
+            AimbotSection:Dropdown({Name = "Priority", Flag = "Aimbot/Priority", List = PriorityList})
+            AimbotSection:Dropdown({Name = "Body Parts", Flag = "Aimbot/BodyParts", List = BodyPartsList})
+        end
+        local AFOVSection = CombatTab:Section({Name = "Aimbot FOV Circle", Side = "Left"}) do
+            AFOVSection:Toggle({Name = "Enabled", Flag = "Aimbot/FOV/Enabled", Value = true})
+            AFOVSection:Toggle({Name = "Filled", Flag = "Aimbot/FOV/Filled", Value = false})
+            AFOVSection:Colorpicker({Name = "Color", Flag = "Aimbot/FOV/Color", Value = {1, 0.66666662693024, 1, 0.25, false}})
+            AFOVSection:Slider({Name = "NumSides", Flag = "Aimbot/FOV/NumSides", Min = 3, Max = 100, Value = 14})
+            AFOVSection:Slider({Name = "Thickness", Flag = "Aimbot/FOV/Thickness", Min = 1, Max = 10, Value = 2})
+        end
         local SilentAimSection = CombatTab:Section({Name = "Silent Aim", Side = "Right"}) do
             SilentAimSection:Toggle({Name = "Enabled", Flag = "SilentAim/Enabled", Value = false}):Keybind({Mouse = true, Flag = "SilentAim/Keybind"})
 
@@ -254,6 +285,39 @@ local Window = Parvus.Utilities.UI:Window({
             SAFOVSection:Slider({Name = "NumSides", Flag = "SilentAim/FOV/NumSides", Min = 3, Max = 100, Value = 14})
             SAFOVSection:Slider({Name = "Thickness", Flag = "SilentAim/FOV/Thickness", Min = 1, Max = 10, Value = 2})
         end
+        local TriggerSection = CombatTab:Section({Name = "Trigger", Side = "Right"}) do
+            TriggerSection:Toggle({Name = "Enabled", Flag = "Trigger/Enabled", Value = false})
+            :Keybind({Flag = "Trigger/Keybind", Value = "MouseButton2", Mouse = true, DisableToggle = true,
+            Callback = function(Key, KeyDown) Trigger = Window.Flags["Trigger/Enabled"] and KeyDown end})
+
+            TriggerSection:Toggle({Name = "Always Enabled", Flag = "Trigger/AlwaysEnabled", Value = false})
+            TriggerSection:Toggle({Name = "Hold Mouse Button", Flag = "Trigger/HoldMouseButton", Value = false})
+            TriggerSection:Toggle({Name = "Prediction", Flag = "Trigger/Prediction", Value = true})
+
+            --TriggerSection:Toggle({Name = "Team Check", Flag = "Trigger/TeamCheck", Value = false})
+            TriggerSection:Toggle({Name = "Distance Check", Flag = "Trigger/DistanceCheck", Value = false})
+            TriggerSection:Toggle({Name = "Visibility Check", Flag = "Trigger/VisibilityCheck", Value = false})
+
+            TriggerSection:Slider({Name = "Click Delay", Flag = "Trigger/Delay", Min = 0, Max = 1, Precise = 2, Value = 0.15, Unit = "sec"})
+            TriggerSection:Slider({Name = "Distance Limit", Flag = "Trigger/DistanceLimit", Min = 25, Max = 10000, Value = 250, Unit = "studs"})
+            TriggerSection:Slider({Name = "Field Of View", Flag = "Trigger/FOV/Radius", Min = 0, Max = 500, Value = 25, Unit = "r"})
+
+            local PriorityList, BodyPartsList = {{Name = "Closest", Mode = "Button", Value = true}, {Name = "Random", Mode = "Button"}}, {}
+            for Index, Value in pairs(KnownBodyParts) do
+                PriorityList[#PriorityList + 1] = {Name = Value[1], Mode = "Button", Value = false}
+                BodyPartsList[#BodyPartsList + 1] = {Name = Value[1], Mode = "Toggle", Value = Value[2]}
+            end
+
+            TriggerSection:Dropdown({Name = "Priority", Flag = "Trigger/Priority", List = PriorityList})
+            TriggerSection:Dropdown({Name = "Body Parts", Flag = "Trigger/BodyParts", List = BodyPartsList})
+        end
+        local TFOVSection = CombatTab:Section({Name = "Trigger FOV Circle", Side = "Left"}) do
+            TFOVSection:Toggle({Name = "Enabled", Flag = "Trigger/FOV/Enabled", Value = true})
+            TFOVSection:Toggle({Name = "Filled", Flag = "Trigger/FOV/Filled", Value = false})
+            TFOVSection:Colorpicker({Name = "Color", Flag = "Trigger/FOV/Color", Value = {0.0833333358168602, 0.6666666269302368, 1, 0.25, false}})
+            TFOVSection:Slider({Name = "NumSides", Flag = "Trigger/FOV/NumSides", Min = 3, Max = 100, Value = 14})
+            TFOVSection:Slider({Name = "Thickness", Flag = "Trigger/FOV/Thickness", Min = 1, Max = 10, Value = 2})
+        end
     end
     local VisualsSection = Parvus.Utilities:ESPSection(Window, "Visuals", "ESP/Player", true, true, true, true, true, false) do
         VisualsSection:Colorpicker({Name = "Ally Color", Flag = "ESP/Player/Ally", Value = {0.3333333432674408, 0.6666666269302368, 1, 0, false}})
@@ -263,7 +327,207 @@ local Window = Parvus.Utilities.UI:Window({
         VisualsSection:Toggle({Name = "Distance Check", Flag = "ESP/Player/DistanceCheck", Value = true})
         VisualsSection:Slider({Name = "Distance", Flag = "ESP/Player/Distance", Min = 25, Max = 10000, Value = 1000, Unit = "studs"})
     end
+    local ESPTab = Window:Tab({Name = "AR2 ESP"}) do
+        local ItemSection = ESPTab:Section({Name = "Item ESP", Side = "Left"}) do local Items = {}
+            ItemSection:Toggle({Name = "Enabled", Flag = "AR2/ESP/Items/Enabled", Value = false})
+            ItemSection:Toggle({Name = "Distance Check", Flag = "AR2/ESP/Items/DistanceCheck", Value = true})
+            ItemSection:Slider({Name = "Distance", Flag = "AR2/ESP/Items/Distance", Min = 25, Max = 5000, Value = 50, Unit = "studs"})
+
+            for Index, Data in pairs(ItemCategory) do
+                local ItemFlag = "AR2/ESP/Items/" .. Data[1]
+                Window.Flags[ItemFlag .. "/Enabled"] = Data[2]
+
+                Items[#Items + 1] = {
+                    Name = Data[1], Mode = "Toggle", Value = Data[2],
+                    Colorpicker = {Flag = ItemFlag .. "/Color", Value = {1, 0, 1, 0.5, false}},
+                    Callback = function(Selected, Option) Window.Flags[ItemFlag .. "/Enabled"] = Option.Value end
+                }
+            end
+
+            ItemSection:Dropdown({Name = "ESP List", Flag = "AR2/Items", List = Items})
+        end
+        local CorpsesSection = ESPTab:Section({Name = "Corpses ESP", Side = "Left"}) do
+            CorpsesSection:Toggle({Name = "Enabled", Flag = "AR2/ESP/Corpses/Enabled", Value = false})
+            CorpsesSection:Toggle({Name = "Distance Check", Flag = "AR2/ESP/Corpses/DistanceCheck", Value = true})
+            CorpsesSection:Colorpicker({Name = "Color", Flag = "AR2/ESP/Corpses/Color", Value = {1, 0, 1, 0.5, false}})
+            CorpsesSection:Slider({Name = "Distance", Flag = "AR2/ESP/Corpses/Distance", Min = 25, Max = 5000, Value = 1500, Unit = "studs"})
+        end
+        local ZombiesSection = ESPTab:Section({Name = "Zombies ESP", Side = "Left"}) do local ZIs = {}
+            ZombiesSection:Toggle({Name = "Enabled", Flag = "AR2/ESP/Zombies/Enabled", Value = false})
+            ZombiesSection:Toggle({Name = "Distance Check", Flag = "AR2/ESP/Zombies/DistanceCheck", Value = true})
+            ZombiesSection:Slider({Name = "Distance", Flag = "AR2/ESP/Zombies/Distance", Min = 25, Max = 5000, Value = 1500, Unit = "studs"})
+
+            for Index, Data in pairs(ZombieInherits) do
+                local Name = Data[1]:gsub("Presets.", ""):gsub(" ", "")
+                local ZIFlag = "AR2/ESP/Zombies/" .. Name
+                Window.Flags[ZIFlag .. "/Enabled"] = Data[2]
+
+                ZIs[#ZIs + 1] = {
+                    Name = Name, Mode = "Toggle", Value = Data[2],
+                    Colorpicker = {Flag = ZIFlag .. "/Color", Value = {1, 0, 1, 0.5, false}},
+                    Callback = function(Selected, Option) Window.Flags[ZIFlag .. "/Enabled"] = Option.Value end
+                }
+            end
+
+            ZombiesSection:Dropdown({Name = "ESP List", Flag = "AR2/Zombies", List = ZIs})
+        end
+        local RESection = ESPTab:Section({Name = "Random Events ESP", Side = "Right"}) do local REs = {}
+            RESection:Toggle({Name = "Enabled", Flag = "AR2/ESP/RandomEvents/Enabled", Value = false})
+            RESection:Toggle({Name = "Distance Check", Flag = "AR2/ESP/RandomEvents/DistanceCheck", Value = true})
+            RESection:Slider({Name = "Distance", Flag = "AR2/ESP/RandomEvents/Distance", Min = 25, Max = 5000, Value = 1500, Unit = "studs"})
+
+            for Index, Data in pairs(RandomEvents) do
+                local REFlag = "AR2/ESP/RandomEvents/" .. Data[1]
+                Window.Flags[REFlag .. "/Enabled"] = Data[2]
+
+                REs[#REs + 1] = {
+                    Name = Data[1], Mode = "Toggle", Value = Data[2],
+                    Colorpicker = {Flag = REFlag .. "/Color", Value = {1, 0, 1, 0.5, false}},
+                    Callback = function(Selected, Option) Window.Flags[REFlag .. "/Enabled"] = Option.Value end
+                }
+            end
+
+            RESection:Dropdown({Name = "ESP List", Flag = "AR2/RandomEvents", List = REs})
+        end
+        local VehiclesSection = ESPTab:Section({Name = "Vehicles ESP", Side = "Right"}) do
+            VehiclesSection:Toggle({Name = "Enabled", Flag = "AR2/ESP/Vehicles/Enabled", Value = false})
+            VehiclesSection:Toggle({Name = "Distance Check", Flag = "AR2/ESP/Vehicles/DistanceCheck", Value = true})
+            VehiclesSection:Colorpicker({Name = "Color", Flag = "AR2/ESP/Vehicles/Color", Value = {1, 0, 1, 0.5, false}})
+            VehiclesSection:Slider({Name = "Distance", Flag = "AR2/ESP/Vehicles/Distance", Min = 25, Max = 5000, Value = 1500, Unit = "studs"})
+        end
+    end
     local MiscTab = Window:Tab({Name = "Miscellaneous"}) do local LModes = {}
+        local LightingSection = MiscTab:Section({Name = "Lighting", Side = "Left"}) do
+            LightingSection:Toggle({Name = "Enabled", Flag = "AR2/Lighting/Enabled", Value = false,
+            Callback = function(Bool) if not Bool then LightingState.BaseTime = OldBaseTime end end})
+            --LightingSection:Toggle({Name = "Positive StartTime", Flag = "AR2/Lighting/StartTime", Value = false})
+            LightingSection:Slider({Name = "Time", Flag = "AR2/Lighting/Time", Min = 0, Max = 24, Precise = 1, Value = 12, Unit = "hours"})
+
+            for Name, LightingMode in pairs(getupvalue(Lighting.GetState, 4)) do
+                LModes[#LModes + 1] = {Name = Name, Mode = "Button", Value = false,
+                Callback = function() Lighting:SetMode(Name) end}
+            end
+
+            LightingSection:Dropdown({Name = "Lighting Mode", Flag = "AR2/Lighting/Modes", List = LModes})
+            LightingSection:Button({Name = "Reset Lighting Mode", Callback = function() Lighting:Reset() end})
+
+        end
+        local RecoilSection = MiscTab:Section({Name = "Weapon", Side = "Left"}) do
+            --RecoilSection:Toggle({Name = "Instant Hit", Flag = "AR2/InstantHit", Value = false})
+            RecoilSection:Toggle({Name = "Bullet Tracer", Flag = "AR2/BulletTracer/Enabled", Value = false})
+            :Colorpicker({Flag = "AR2/BulletTracer/Color", Value = {1, 0.75, 1, 0, true}})
+            RecoilSection:Toggle({Name = "Silent Wallbang", Flag = "AR2/MagicBullet/Enabled", Value = false}):Keybind({Flag = "AR2/MagicBullet/Keybind"})
+            RecoilSection:Slider({Name = "Wallbang Depth", Flag = "AR2/MagicBullet/Depth", Min = 1, Max = 5, Value = 5, Unit = "studs"})
+            RecoilSection:Divider()
+            RecoilSection:Toggle({Name = "Recoil Control", Flag = "AR2/Recoil/Enabled", Value = false})
+            RecoilSection:Slider({Name = "Recoil", Flag = "AR2/Recoil/Value", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Toggle({Name = "No Spread", Flag = "AR2/NoSpread", Value = false})
+            --RecoilSection:Toggle({Name = "No Wobble", Flag = "AR2/NoWobble", Value = false})
+            RecoilSection:Toggle({Name = "No Camera Flinch", Flag = "AR2/NoFlinch", Value = false})
+            RecoilSection:Toggle({Name = "Unlock Firemodes", Flag = "AR2/UnlockFiremodes", Value = false})
+            RecoilSection:Toggle({Name = "Instant Reload", Flag = "AR2/InstantReload", Value = false})
+            --[[RecoilSection:Divider()
+            RecoilSection:Toggle({Name = "Recoil Control", Flag = "AR2/Recoil/Enabled", Value = false})
+            RecoilSection:Slider({Name = "Shift Force", Flag = "AR2/Recoil/ShiftForce", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "Roll Bias", Flag = "AR2/Recoil/RollBias", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "Raise Force", Flag = "AR2/Recoil/RaiseForce", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "Slide Force", Flag = "AR2/Recoil/SlideForce", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "KickUp Force", Flag = "AR2/Recoil/KickUpForce", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "Bob Force", Flag = "AR2/Bob/Force", Min = 0, Max = 100, Value = 0, Unit = "%"})
+            RecoilSection:Slider({Name = "Bob Damping", Flag = "AR2/Bob/Damping", Min = 0, Max = 100, Value = 0, Unit = "%"})]]
+        end
+        local VehSection = MiscTab:Section({Name = "Vehicle", Side = "Left"}) do
+            VehSection:Toggle({Name = "Enabled", Flag = "AR2/Vehicle/Enabled", Value = false})
+            VehSection:Toggle({Name = "No Impact", Flag = "AR2/Vehicle/Impact", Value = false})
+            --VehSection:Toggle({Name = "Fly", Flag = "AR2/Vehicle/Fly", Value = false})
+            VehSection:Toggle({Name = "Instant Action", Flag = "AR2/Vehicle/Instant", Value = false})
+            VehSection:Slider({Name = "Max Speed", Flag = "AR2/Vehicle/MaxSpeed", Min = 0, Max = 500, Value = 100, Unit = "mph"})
+            --VehSection:Slider({Name = "Steer", Flag = "AR2/Vehicle/Steer", Min = 100, Max = 500, Value = 200})
+            --[[VehSection:Slider({Name = "Damping", Flag = "AR2/Vehicle/Damping", Min = 0, Max = 200, Value = 100})
+            VehSection:Slider({Name = "Velocity", Flag = "AR2/Vehicle/Velocity", Min = 0, Max = 200, Value = 100})]]
+        end
+        --[[local TargetSection = MiscTab:Section({Name = "Target", Side = "Right"}) do
+            local PlayerDropdown = TargetSection:Dropdown({Name = "Player List",
+            IgnoreFlag = true, Flag = "AR2/Teleport/List"})
+            PlayerDropdown:RefreshToPlayers(false)
+
+            TargetSection:Button({Name = "Refresh", Callback = function()
+                PlayerDropdown:RefreshToPlayers(false)
+            end})
+
+            TargetSection:Button({Name = "Teleport", Callback = function()
+                if Window.Flags["AR2/Teleport/Loop"] then return end
+                TeleportBypass = true
+                while task.wait() do
+                    if not Teleport(PlayerDropdown.Value[1]) then
+                        Parvus.Utilities.UI:Toast({Title = "Teleport Ended", Duration = 5})
+                        TeleportBypass = false break
+                    end
+                end
+            end})
+
+            TargetSection:Toggle({Name = "Loop Teleport", Flag = "AR2/Teleport/Loop", Value = false}):Keybind()
+            TargetSection:Slider({Name = "Teleport Speed", Flag = "AR2/Teleport/Speed", Min = 1, Max = 50, Value = 20, Unit = "studs", Wide = true})
+            TargetSection:Button({Name = "TP Zombies", Callback = function()
+                local OldAntiZombie = Window:GetValue("AR2/AntiZombie/Enabled")
+                Window:SetValue("AR2/AntiZombie/Enabled", false)
+
+                local Closest = GetCharactersInRadius(Zombies.Mobs, 250)
+                if not Closest then return end
+                for Index, Character in pairs(Closest) do
+                    if isnetworkowner(Character.PrimaryPart) then
+                        task.spawn(function()
+                            while task.wait() do
+                                if not Character then print("no char") break end
+                                if not Character.PrimaryPart then print("no char pp") break end
+                                Character.PrimaryPart.Anchored = false
+
+                                if not PlayerDropdown.Value[1] then print("no plr") break end
+                                local TargetPlayer = PlayerService:FindFirstChild(PlayerDropdown.Value[1])
+                                if not TargetPlayer then print("no plr obj") break end
+                                if not TargetPlayer.Character then print("no plr char") break end
+                                local Back = TargetPlayer.Character.PrimaryPart.CFrame * Vector3.new(0, 0, 12)
+                                Character.PrimaryPart.CFrame = CFrame.new(Back, TargetPlayer.Character.PrimaryPart.Position - Back)
+                                if not isnetworkowner(Character.PrimaryPart) then print("teleported", Character) break end
+                            end
+                        end)
+                    end
+                end
+
+                Window:SetValue("AR2/AntiZombie/Enabled", OldAntiZombie)
+            end})
+        end]]
+        local CharSection = MiscTab:Section({Name = "Character", Side = "Right"}) do
+            CharSection:Toggle({Name = "Fly Enabled", Flag = "AR2/Fly/Enabled", Value = false}):Keybind({Flag = "AR2/Fly/Keybind"})
+            CharSection:Slider({Name = "", Flag = "AR2/Fly/Speed", Min = 0, Max = 10, Precise = 1, Value = 0.7, Unit = "studs", Wide = true})
+            --CharSection:Divider()
+            CharSection:Toggle({Name = "Walk Speed", Flag = "AR2/WalkSpeed/Enabled", Value = false}):Keybind({Flag = "AR2/WalkSpeed/Keybind"})
+            CharSection:Slider({Name = "", Flag = "AR2/WalkSpeed/Speed", Min = 0, Max = 1.4, Precise = 1, Value = 0.7, Unit = "studs", Wide = true})
+            --CharSection:Divider()
+            CharSection:Toggle({Name = "Jump Height", Flag = "AR2/JumpHeight/Enabled", Value = false}):Keybind({Flag = "AR2/JumpHeight/Keybind"})
+            CharSection:Toggle({Name = "Infinite Jump", Flag = "AR2/JumpHeight/NoFallCheck", Value = false})
+            CharSection:Toggle({Name = "No Fall Impact", Flag = "AR2/NoFallImpact", Value = false})
+            CharSection:Toggle({Name = "No Jump Debounce", Flag = "AR2/NoJumpDebounce", Value = false})
+            CharSection:Slider({Name = "", Flag = "AR2/JumpHeight/Height", Min = 4.8, Max = 100, Precise = 1, Value = 4.8, Unit = "studs", Wide = true})
+            --CharSection:Divider()
+            CharSection:Toggle({Name = "Use In Air/Water", Flag = "AR2/UseInAir", Value = false})
+            --CharSection:Toggle({Name = "Use In Water", Flag = "AR2/UseInWater", Value = false})
+            CharSection:Toggle({Name = "Fast Respawn", Flag = "AR2/FastRespawn", Value = false})
+            --[[CharSection:Toggle({Name = "Play Dead", Flag = "AR2/PlayDead", IgnoreFlag = true, Value = false,
+            Callback = function(Bool)
+                if not PlayerClass.Character then return end
+                if Bool then PlayerClass.Character.Animator:PlayAnimationReplicated("Death.Standing Forwards", true)
+                else PlayerClass.Character.Animator:StopAnimationReplicated("Death.Standing Forwards", true) end
+            end})]]
+            CharSection:Button({Name = "Respawn", Callback = function()
+                task.spawn(function() SetIdentity(2)
+                    PlayerClass:UnloadCharacter()
+                    Interface:Hide("Reticle")
+                    task.wait(0.5)
+                    PlayerClass:LoadCharacter()
+                end)
+            end}):Tooltip("You will lose loot")
+        end
         local MiscSection = MiscTab:Section({Name = "Other", Side = "Right"}) do
 
             -- Very basic head expander idc
@@ -808,8 +1072,7 @@ local function HookCharacter(Character)
         end
     end
 
-    local OldEquip = Character.Equip
-    Character.Equip = function(Self, Item, ...)
+    local OldEquip; OldEquip = hookfunction(Character.Equip, function(Self, Item, ...)
         if Item.FireConfig and Item.FireConfig.MuzzleVelocity then
             ProjectileSpeed = Item.FireConfig.MuzzleVelocity * Globals.MuzzleVelocityMod
         end
@@ -834,9 +1097,9 @@ local function HookCharacter(Character)
         end]]
 
         return OldEquip(Self, Item, ...)
-    end
-    local OldJump = Character.Actions.Jump
-    Character.Actions.Jump = function(Self, ...)
+    end)
+    
+    local OldJump; OldJump = hookfunction(Character.Actions.Jump, function(Self, ...)
         local Args = {...}
 
         if Window.Flags["AR2/NoJumpDebounce"] then
@@ -857,7 +1120,7 @@ local function HookCharacter(Character)
         end
 
         return OldJump(Self, ...)
-    end
+    end)
     --local OldPlayReloadAnimation = Character.Animator.PlayReloadAnimation
     --print(OldPlayReloadAnimation)
     --[[for i,v in pairs(Character.Animator) do
@@ -887,8 +1150,7 @@ local function HookCharacter(Character)
             return OldRetune(Self, Force, ...)
         end
     end]]
-    local OldToolAction = Character.Actions.ToolAction
-    Character.Actions.ToolAction = function(Self, ...)
+    local OldToolAction; OldToolAction = hookfunction(Character.Actions.ToolAction, function(Self, ...)
         if Window.Flags["AR2/UnlockFiremodes"] then
             if not Self.EquippedItem then return OldToolAction(Self, ...) end
             local FireModes = Self.EquippedItem.FireModes
@@ -904,7 +1166,7 @@ local function HookCharacter(Character)
         end
 
         return OldToolAction(Self, ...)
-    end
+    end)
 end
 
 local OldIndex, OldNamecall = nil, nil
@@ -919,6 +1181,7 @@ end)
 OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
     local Method = getnamecallmethod()
 
+    --[[
     if Method == "FireServer" then
         local Args = {...}
         if type(Args[1]) == "table" then
@@ -926,6 +1189,7 @@ OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
             return
         end
     end
+    ]]
 
     if Method == "GetChildren"
     and (Self == ReplicatedFirst
@@ -937,8 +1201,7 @@ OldNamecall = hookmetamethod(game, "__namecall", function(Self, ...)
     return OldNamecall(Self, ...)
 end)
 
-local OldSend = Network.Send
-Network.Send = function(Self, Name, ...)
+local OldSend; OldSend = hookfunction(Network.Send, function(Self, Name, ...)
     if table.find(SanityBans, Name) then print("bypassed", Name) return end
     if Name == "Character Jumped" and Window.Flags["AR2/SSCS"] then return end
 
@@ -982,10 +1245,9 @@ Network.Send = function(Self, Name, ...)
     end]]
 
     return OldSend(Self, Name, ...)
-end
+end)
 
-local OldFetch = Network.Fetch
-Network.Fetch = function(Self, Name, ...)
+local OldFetch; OldFetch = hookfunction(Network.Fetch, function(Self, Name, ...)
     if table.find(SanityBans, Name) then print("bypassed", Name) return end
 
     if Name == "Character State Report" then
@@ -1013,7 +1275,7 @@ Network.Fetch = function(Self, Name, ...)
     end
 
     return OldFetch(Self, Name, ...)
-end
+end)
 
 setupvalue(Bullets.Fire, 1, function(Character, CCamera, Weapon, ...)
     if Window.Flags["AR2/NoSpread"] then
@@ -1186,8 +1448,7 @@ setupvalue(InteractHeartbeat, 11, function(...)
     return FindItemData(...)
 end)
 
-local OldFire = Bullets.Fire
-Bullets.Fire = function(Self, ...)
+local OldFire; OldFire = hookfunction(Bullets.Fire, function(Self, ...)
     if SilentAim and math.random(100) <= Window.Flags["SilentAim/HitChance"] then
         local Args = {...}
         local BodyPart = SilentAim[3]
@@ -1223,7 +1484,7 @@ Bullets.Fire = function(Self, ...)
     --ProjectileDirection2 = Args[5]
 
     return OldFire(Self, ...)
-end
+end)
 
 -- Old Recoil Control
 --[[local OldPost = Animators.Post
@@ -1236,13 +1497,11 @@ Animators.Post = function(Self, Name, ...) local Args = {...}
         Args[1][5] = Args[1][5] * (Window.Flags["AR2/Recoil/KickUpForce"] / 100)
     end return OldPost(Self, Name, unpack(Args))
 end]]
-local OldFlinch = CharacterCamera.Flinch
-CharacterCamera.Flinch = function(Self, ...)
+local OldFlinch; OldFlinch = hookfunction(CharacterCamera.Flinch, function(Self, ...)
     if Window.Flags["AR2/NoFlinch"] then return end
     return OldFlinch(Self, ...)
-end
-local OldCharacterGroundCast = Raycasting.CharacterGroundCast
-Raycasting.CharacterGroundCast = function(Self, Position, LengthDown, ...)
+end)
+local OldCharacterGroundCast; OldCharacterGroundCast = hookfunction(Raycasting.CharacterGroundCast, function(Self, Position, LengthDown, ...)
     if PlayerClass.Character and Position == PlayerClass.Character.RootPart.CFrame then
         if Window.Flags["AR2/UseInAir"] then
             return GroundPart, CFrame.new(), Vector3.new(0, 1, 0)
@@ -1250,17 +1509,16 @@ Raycasting.CharacterGroundCast = function(Self, Position, LengthDown, ...)
         end
     end
     return OldCharacterGroundCast(Self, Position, LengthDown, ...)
-end
+end)
 --[[local OldSwimCheckCast = Raycasting.SwimCheckCast
 Raycasting.SwimCheckCast = function(Self, ...)
     if Window.Flags["AR2/UseInWater"] then return nil end
     return OldSwimCheckCast(Self, ...)
 end]]
-local OldPlayAnimation = Animators.PlayAnimation
-Animators.PlayAnimation = function(Self, Path, ...)
+local OldPlayAnimation; OldPlayAnimation = hookfunction(Animators.PlayAnimation, function(Self, Path, ...)
     if Path == "Actions.Fall Impact" and Window.Flags["AR2/NoFallImpact"] then return end
     return OldPlayAnimation(Self, Path, ...)
-end
+end)
 -- Old Vehicle Mod
 --[[local OldVC = VehicleController.new
 VehicleController.new = function(...)
@@ -1286,37 +1544,31 @@ VehicleController.new = function(...)
     return unpack(ReturnArgs)
 end]]
 
-local OldCD = Events["Character Dead"]
-if OldCD then
-    Events["Character Dead"] = function(...)
-        if Window.Flags["AR2/FastRespawn"] then
-            task.spawn(function() SetIdentity(2)
-                PlayerClass:UnloadCharacter()
-                Interface:Hide("Reticle")
-                task.wait(0.5)
-                PlayerClass:LoadCharacter()
-            end)
-        end
-
-        return OldCD(...)
+local OldCD; OldCD = hookfunction(Events["Character Dead"], function(...)
+    if Window.Flags["AR2/FastRespawn"] then
+        task.spawn(function() SetIdentity(2)
+            PlayerClass:UnloadCharacter()
+            Interface:Hide("Reticle")
+            task.wait(0.5)
+            PlayerClass:LoadCharacter()
+        end)
     end
-end
-local OldLSU = Events["Lighting State Update"]
-Events["Lighting State Update"] = function(Data, ...)
+
+    return OldCD(...)
+end)
+local OldLSU; OldLSU = hookfunction(Events["Lighting State Update"], function(Data, ...)
     LightingState = Data
     OldBaseTime = LightingState.BaseTime
     --print("Lighting State Updated")
     return OldLSU(Data, ...)
-end
-local OldSquadUpdate = Events["Squad Update"]
-Events["Squad Update"] = function(Data, ...)
+end)
+local OldSquadUpdate; OldSquadUpdate = hookfunction(Events["Squad Update"], function(Data, ...)
     SquadData = Data
     --print(repr(SquadData))
     --print("Squad Updated")
     return OldSquadUpdate(Data, ...)
-end
-local OldICA = Events["Inventory Container Added"]
-Events["Inventory Container Added"] = function(Id, Data, ...)
+end)
+local OldICA; OldICA = hookfunction(Events["Inventory Container Added"], function(Id, Data, ...)
     if not Window.Flags["AR2/ESP/Items/Containers/Enabled"] then return OldICA(Id, Data, ...) end
 
     --print(Data.Type)
@@ -1329,9 +1581,8 @@ Events["Inventory Container Added"] = function(Id, Data, ...)
     end
 
     return OldICA(Id, Data, ...)
-end
-local OldCC = Events["Container Changed"]
-Events["Container Changed"] = function(Data, ...)
+end)
+local OldCC; OldCC = hookfunction(Events["Container Changed"], function(Data, ...)
     if not Window.Flags["AR2/ESP/Items/Containers/Enabled"] then return OldCC(Data, ...) end
 
     RemoveObject:Fire(Data.Id)
@@ -1344,7 +1595,7 @@ Events["Container Changed"] = function(Data, ...)
     end
 
     return OldCC(Data, ...)
-end
+end)
 
 if PlayerClass.Character then
     HookCharacter(PlayerClass.Character)
